@@ -1,34 +1,23 @@
-addpath(genpath('./thirdparty'))
-addpath(genpath('./utils'))
+addpath(genpath('./src'))
 
 %% Load Data
-% storage_path = '/Volumes/Macintosh HD - Data/MRI_DATA/';
-storage_path = '/mnt/LIN_DATA/MRI_DATA/';
-
-dataset_path = 'PST2MAP_220823/PULSEQNIST_22_08_21-18_11_23-DST-1_3_12_2_1107_5_2_18_41185/BILAL_PULSEQ_20220823_170149_888000/';
-% series_path = '/PULSEQ_MNCLT2MAP_0003/';
-series_path = '/PULSEQ_NICLT2MAP_0002/';
-
-
-full_path = fullfile(storage_path, dataset_path, series_path);
-[par, img] = dicomr(full_path);
+filename = "meas_MID00188_FID08175_pulseqT2_lower";
 
 %   Load MRI data and predefined options structure
 load('t2_mese_rfinfo.mat')
 
-vialset = 'NiCl2'; % 'NiCl2', 'MnCl2'
+load(fullfile("input_data", filename))
 
-Neco = 32;
+[Nx, Ny, Neco] = size(D, [1 2 4]);
 
 frame_txt = cell(1,Neco);
-echotimes = (1:Neco)*15; % [ms]
+echotimes = (1:Neco)*img_header.sequenceParameters.TE; % [ms]
 
 for eco_i=1:Neco
     frame_txt{eco_i} = sprintf('TE=%.0f [ms]', echotimes(eco_i));
 end
 
 
-img = reshape(img, [128, 128, 1, Neco]);
 
 figtitle = sprintf('%s_ET_movie', vialset);
 % as(flipud(squeeze(img)), 'title', figtitle, 'imageText', frame_txt)
@@ -86,7 +75,7 @@ opt.lsq.Icomp.XL   = [0.005 0.00 0.30];      %   Lower bound (1 x 3)
 
 %%% FIT ENTIRE IMAGE %%%
 
-[T2,B1,amp, opt] = StimFitImgPulseq(img,opt);
+[T2,B1,amp, opt] = StimFitImgPulseq(D, opt);
 
 
 save(sprintf('T2map_out/%s_StimFit.mat', vialset), "T2", "B1", "amp", "opt")
