@@ -1,8 +1,9 @@
 addpath(genpath('./src'))
 
 %% Load Data
-filename = "meas_MID00188_FID08175_pulseqT2_lower";
-
+if ~exist('filename', 'var')
+    filename = "meas_MID00073_FID22848_pulseq_MnClT2";
+end
 %   Load MRI data and predefined options structure
 load('t2_mese_rfinfo.mat')
 
@@ -18,8 +19,7 @@ for eco_i=1:Neco
 end
 
 
-
-figtitle = sprintf('%s_ET_movie', vialset);
+figtitle = sprintf('%s_ET_movie', recon_header.vialset);
 % as(flipud(squeeze(img)), 'title', figtitle, 'imageText', frame_txt)
 
 % figure; montage(squeeze(img), 'DisplayRange', [], 'Indices', 1:2:32); title(sprintf('Echoes, %s', par.SeriesDescription), 'Interpreter', 'None')
@@ -63,7 +63,7 @@ opt.RFr.ref = 0;
 opt.lsq.Ncomp = 1;
 
 opt.lsq.Icomp.X0   = [0.060 1e-1 0.99];      %   Starting point (1 x 3) [T2(s) amp(au) B1(fractional)]
-opt.lsq.Icomp.XU   = [3.000 1e+3 1.00];      %   Upper bound (1 x 3)
+opt.lsq.Icomp.XU   = [5.000 1e+3 1.00];      %   Upper bound (1 x 3)
 opt.lsq.Icomp.XL   = [0.005 0.00 0.30];      %   Lower bound (1 x 3)
 
 %%% FIT SINGLE VOXEL %%%
@@ -75,7 +75,9 @@ opt.lsq.Icomp.XL   = [0.005 0.00 0.30];      %   Lower bound (1 x 3)
 
 %%% FIT ENTIRE IMAGE %%%
 
-[T2,B1,amp, opt] = StimFitImgPulseq(D, opt);
+[T2,B1,amp, opt] = StimFitImgPulseq(D.*union_mask, opt);
+% [T2,B1,amp, opt] = StimFitImgPulseq(D, opt);
 
+save(fullfile("input_data", filename), "T2", "B1", "amp", "opt" ,'-append');
 
-save(sprintf('T2map_out/%s_StimFit.mat', vialset), "T2", "B1", "amp", "opt")
+% save(sprintf('T2map_out/%s_StimFit.mat', filename), "T2", "B1", "amp", "opt", 'vialset')

@@ -45,7 +45,6 @@ Y = double(X);
 nmax = size(Z,1);
 mmax = size(Z,2);
 
-gscale = 0.5;
 xc = nmax/2;
 yc = mmax/2;
 

@@ -1,0 +1,3 @@
+[submodule "src/thirdparty/qMRLab"]
+	path = src/thirdparty/qMRLab
+	url = https://github.com/qMRLab/qMRLab
