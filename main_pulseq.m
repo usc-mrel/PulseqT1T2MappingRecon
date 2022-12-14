@@ -16,10 +16,10 @@ mrd2mat4mapping;
 %% Select vials and slice to map
 
 vialset = 'NiCl2';      % 'NiCl2', 'MnCl2' 
-slc = 34:37;               % Slice for 3D acquisitions
+slc = 34:37;            % Slice for 3D acquisitions
 nrots = 0;              % Number of times the phantom needs to be rotated for correct vial ordering.
 erode_px = 1;           % Number of pixels to erode for tighter vial mask
-edge_threshold = 0.02;     % Threshold for edge detection before auto segmentation.
+edge_threshold = 0.02;  % Threshold for edge detection before auto segmentation.
 flipimlr = false;
 Preproc4Mapping;
 
@@ -32,9 +32,16 @@ elseif strcmp(meas_type, 'b1map')
     
     qMRLab_prot_filename = 'b1_dam.qmrlab.mat';
     FlipAngle = 30;
+    b1method = 'afi'; % 'afi', 'dam'
 
-%     main_b1map_afi;
-    main_b1map;
+    switch b1method
+        case 'afi'
+            main_b1map_afi;
+        case 'dam'
+            main_b1map;
+        otherwise
+            error('Unknown B1 mapping method.')
+    end
 
 
 elseif strcmp(meas_type, 't1map')
@@ -52,9 +59,5 @@ end
 ref_dir = 'meas_MID00244_FID52930_IR_SE_TI_4500';
 % ref_dir = 'zhibo_ref';
 
+NistPhantomROIAnalysis;
 
-if strcmp(meas_type, 't2map') || strcmp(meas_type, 't1map')
-    NistPhantomROIAnalysis;
-elseif strcmp(meas_type, 'b1map')
-    NistPhantomB1ROIAnalysis;
-end

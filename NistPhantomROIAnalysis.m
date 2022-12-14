@@ -1,8 +1,9 @@
 addpath(genpath('src/'))
 
 if ~exist('filename', 'var')
-    filename = 'meas_MID00838_FID54559_pulseq3D_VFA_T1map_TR30_largespoilers';
+%     filename = 'meas_MID00838_FID54559_pulseq3D_VFA_T1map_TR30_largespoilers';
 %     filename = 'meas_MID00188_FID08175_pulseqT2_lower';
+    filename = 'meas_MID00892_FID54607_pulseq3D_AFI60';
 
 end
 
@@ -27,6 +28,10 @@ switch meas_type
     case 't2map'
         vial_XX = vial_masks.*T2*1e3;
         meas_map = T2;
+    case 'b1map'
+        meas_map = B1map_struct.B1map_raw;
+        vial_XX = vial_masks.*meas_map;
+
     otherwise
         error('Wrong measurement type. Must be t1map, t2map.')
 end
@@ -56,28 +61,38 @@ for z_i=1:Nslc
 end
 %% Method comparison
 
-ref = load(fullfile(sprintf('%s_out', meas_type), ref_dir, 'refvals.mat'));
-mean_ref = ref.vals.(recon_header.vialset).mean;
-std_ref = ref.vals.(recon_header.vialset).std;
+if strcmp(meas_type, 't1map') || strcmp(meas_type, 't2map')
 
-figure; plot(mean_ref, mean_sort,  '*', 'LineWidth',2); errorbarxy(mean_ref, mean_sort, std_ref, std_sort)
-hold on; plot([0, max(mean_sort)], [0, max(mean_sort)], 'r--', LineWidth=2); axis square;
-ylabel(sprintf('Compared %s [ms]', meas_type)); xlabel(sprintf('Reference %s [ms]', meas_type))
-title(sprintf('%s array %s comparison', recon_header.vialset, meas_type));
-
-maxmax = max([mean_sort(1)+std_sort(1) mean_ref(1)+std_ref(1)]);
-ylim([0 maxmax])
-xlim([0 maxmax])
-
-set(gca, 'XScale', 'log')
-set(gca, 'YScale', 'log')
-line([20, maxmax], [20, maxmax], 'LineStyle', '--', 'Color', 'red', 'LineWidth', 2)
-xticks([25, 50, 100, 200, 400, 800, 1600])
-yticks([25, 50, 100, 200, 400, 800, 1600])
-
-exportgraphics(gcf,fullfile(out_dir, 'comparison.eps'), 'ContentType','vector');
-
-vals.(recon_header.vialset).mean = mean_sort;
-vals.(recon_header.vialset).std = std_sort;
-
-save(fullfile(out_dir, 'refvals.mat'), "vals");
+    ref = load(fullfile(sprintf('%s_out', meas_type), ref_dir, 'refvals.mat'));
+    mean_ref = ref.vals.(recon_header.vialset).mean;
+    std_ref = ref.vals.(recon_header.vialset).std;
+    
+    figure; plot(mean_ref, mean_sort,  '*', 'LineWidth',2); errorbarxy(mean_ref, mean_sort, std_ref, std_sort)
+    hold on; plot([0, max(mean_sort)], [0, max(mean_sort)], 'r--', LineWidth=2); axis square;
+    ylabel(sprintf('Compared %s [ms]', meas_type)); xlabel(sprintf('Reference %s [ms]', meas_type))
+    title(sprintf('%s array %s comparison', recon_header.vialset, meas_type));
+    
+    maxmax = max([mean_sort(1)+std_sort(1) mean_ref(1)+std_ref(1)]);
+    ylim([0 maxmax])
+    xlim([0 maxmax])
+    
+    set(gca, 'XScale', 'log')
+    set(gca, 'YScale', 'log')
+    line([20, maxmax], [20, maxmax], 'LineStyle', '--', 'Color', 'red', 'LineWidth', 2)
+    xticks([25, 50, 100, 200, 400, 800, 1600])
+    yticks([25, 50, 100, 200, 400, 800, 1600])
+    
+    exportgraphics(gcf,fullfile(out_dir, 'comparison.eps'), 'ContentType','vector');
+    
+    vals.(recon_header.vialset).mean = mean_sort;
+    vals.(recon_header.vialset).std = std_sort;
+    
+    save(fullfile(out_dir, 'refvals.mat'), "vals");
+elseif strcmp(meas_type, 'b1map')
+    figure; errorbar(1:nvial, mean_sort, std_sort,  '*', 'LineWidth',2);
+    ylim([0, 1.5])
+    xlabel('Vials')
+    ylabel('Estimated B1+ ratio')
+    title('B1+ vs. vial')
+    exportgraphics(gcf,fullfile(out_dir, 'B1_pervial.eps'), 'ContentType','vector');
+end
