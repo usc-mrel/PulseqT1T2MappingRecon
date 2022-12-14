@@ -52,12 +52,9 @@ end
 ref_dir = 'meas_MID00244_FID52930_IR_SE_TI_4500';
 % ref_dir = 'zhibo_ref';
 
-if strcmp(meas_type, 't2map')
-    NistPhantomT2ROIAnalysis;
 
+if strcmp(meas_type, 't2map') || strcmp(meas_type, 't1map')
+    NistPhantomROIAnalysis;
 elseif strcmp(meas_type, 'b1map')
     NistPhantomB1ROIAnalysis;
-
-elseif strcmp(meas_type, 't1map')
-    NistPhantomT1ROIAnalysis;
 end

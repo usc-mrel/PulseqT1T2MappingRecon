@@ -1,27 +1,43 @@
 addpath(genpath('src/'))
+
 if ~exist('filename', 'var')
-    filename = 'meas_MID00116_FID47424_pulseq3D_vfa_sinc_16+8_spgr';
+    filename = 'meas_MID00838_FID54559_pulseq3D_VFA_T1map_TR30_largespoilers';
+%     filename = 'meas_MID00188_FID08175_pulseqT2_lower';
+
 end
 
 if ~exist('ref_dir', 'var')
     ref_dir = 'zhibo_ref';
 end
 
-out_dir = fullfile('T1map_out/', filename);
 
-mkdir(fullfile('T1map_out', filename))
-
+%% Load data
 load(fullfile("input_data", filename))
 
-vial_T1 = vial_masks.*T1*1e3;
+meas_type = recon_header.meas_type;
+
+out_dir = fullfile(sprintf('%s_out/', meas_type), filename);
+mkdir(out_dir)
+
+
+switch meas_type
+    case 't1map'
+        vial_XX = vial_masks.*T1*1e3;
+        meas_map = T1;
+    case 't2map'
+        vial_XX = vial_masks.*T2*1e3;
+        meas_map = T2;
+    otherwise
+        error('Wrong measurement type. Must be t1map, t2map.')
+end
+
 
 nvial = 14;
-
 mean_sort = zeros(nvial,1);
 std_sort = zeros(nvial,1);
 fid = fopen(fullfile(out_dir, 'stats.txt'), 'wt');
 for v_i=1:nvial
-    nzs = nonzeros(vial_T1(:,:,:,v_i));
+    nzs = nonzeros(vial_XX(:,:,:,v_i));
     mean_sort(v_i) = mean(nzs, 'omitnan');
     std_sort(v_i) = std(nzs, 'omitnan');
     sline = sprintf('Vial %i = %.3f ± %.3f [ms]\n', v_i, mean_sort(v_i), std_sort(v_i));
@@ -30,32 +46,24 @@ for v_i=1:nvial
 end
 
 %% 
-Nslc = size(T1, 3);
+Nslc = size(vial_XX, 3);
 for z_i=1:Nslc
-    f = figure; imagesc(T1(:,:,z_i).*1e3); axis image; colormap turbo; colorbar;
-    title(sprintf("Slice: %i, %s T1 map [ms]", z_i, recon_header.vialset))
+    f = figure; imagesc(meas_map(:,:,z_i).*1e3); axis image; colormap turbo; colorbar;
+    title(sprintf("Slice: %i, %s %s [ms]", z_i, recon_header.vialset, meas_type))
     % ax1 = gca;
     
-    exportgraphics(gcf,fullfile(out_dir, sprintf('T1map_scl%i.eps', z_i)), 'ContentType','vector');
+    exportgraphics(gcf,fullfile(out_dir, sprintf('%s_scl%i.eps', meas_type, z_i)), 'ContentType','vector');
 end
 %% Method comparison
 
-% if strcmp(recon_header.vialset, 'MnCl2')    % Zhibo MnCl2
-%     meanZhibo = [2555 2363 1907.9 1521.1 1122.8 980.6 749.7 563.5 387.8 263.2 204.9 142.7 107.5 74.8];
-%     stdZhibo = [670.4 460.8 208.4 141.1 74.8 54.7 31.2 23.1 12.7 8.9 9.8 7.2 6.8 6.8];
-% elseif strcmp(recon_header.vialset, 'NiCl2') % NiCl2 Zhibo
-%     meanZhibo = [2004.8 1527.8 1097 735.8 520.5 367.9 264.4 190.1 132.7 93.1 63.7 41.2 28.6 20.2];
-%     stdZhibo = [184.6 78.9 43.7 18.4 12.2 7.4 5.7 4.4 3.6 2.7 2.9 7.8 7 8.8];
-% end
-
-ref = load(fullfile('T1map_out', ref_dir, 'refvals.mat'));
+ref = load(fullfile(sprintf('%s_out', meas_type), ref_dir, 'refvals.mat'));
 mean_ref = ref.vals.(recon_header.vialset).mean;
 std_ref = ref.vals.(recon_header.vialset).std;
 
 figure; plot(mean_ref, mean_sort,  '*', 'LineWidth',2); errorbarxy(mean_ref, mean_sort, std_ref, std_sort)
 hold on; plot([0, max(mean_sort)], [0, max(mean_sort)], 'r--', LineWidth=2); axis square;
-ylabel('Pulseq VFA GRE T1 [ms]'); xlabel('IRSE T1 [ms]')
-title(sprintf('%s array T1 comparison', recon_header.vialset));
+ylabel(sprintf('Compared %s [ms]', meas_type)); xlabel(sprintf('Reference %s [ms]', meas_type))
+title(sprintf('%s array %s comparison', recon_header.vialset, meas_type));
 
 maxmax = max([mean_sort(1)+std_sort(1) mean_ref(1)+std_ref(1)]);
 ylim([0 maxmax])
