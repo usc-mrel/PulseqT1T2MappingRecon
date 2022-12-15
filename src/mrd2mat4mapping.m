@@ -3,9 +3,32 @@
 % Description: Prepares Siemens raw file for T1-T2 Mapping
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function mrd2mat4mapping(data_folder_path, filename, ksp_filter, interpX)
+addpath(genpath('src/'));
 
+%% Inputs
+
+if ~exist('data_folder', 'var')
+    data_folder = '221015_vfa_debug';
+end
+if ~exist('filename', 'var')
+    filename    = 'meas_MID00115_FID47423_pulseq3D_DAMB1_noRESET_lowres';
+end
+if ~exist('ksp_filter' ,'var')
+    ksp_filter = true;
+end
+if ~exist('interpX' ,'var')
+    interpX = 1;
+end
 %% Data paths
+if ismac
+    DATA_ROOT = '/Volumes/WD/MRI_DATA';
+elseif isunix
+    DATA_ROOT = '/run/media/bilal/WD/MRI_DATA/';
+end
+
+
+data_folder_path = fullfile(DATA_ROOT, data_folder);
+raw_file_path    = fullfile(data_folder_path, 'raw', filename);
 
 ismrmrd_data_fullpath = fullfile(data_folder_path, 'raw/h5', [filename '.h5']);
 ismrmrd_noise_path    = fullfile(data_folder_path, 'raw/noise', ['noise_' filename, '.h5']);
@@ -131,4 +154,3 @@ as(image, 'title', sprintf('Image %s', filename));
 %% Format and save data for T1-T2 Mapping
 
 save(sprintf('input_data/%s', filename), 'data', 'recon_header', 'acq_header', 'img_header', 'noise', 'noise_header', 'image')
-end
