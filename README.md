@@ -1,3 +1,5 @@
+This recon is now obsolete. Here is a better, unified offline and online recon: https://github.com/usc-mrel/PulseqGadgetronRecon
+
 # General pipeline
 
 
